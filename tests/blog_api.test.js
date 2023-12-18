@@ -2,10 +2,12 @@ const mongoose = require('mongoose')
 const supertest = require('supertest')
 const app = require('../app')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 const helper = require('./blog_helper')
 const api = supertest(app)
+const bcrypt = require('bcrypt')
 
-
+jest.useRealTimers()
 
 beforeEach(async () => {
     await Blog.deleteMany({})
@@ -14,6 +16,7 @@ beforeEach(async () => {
 
 describe('when there are intial blogs', () => {
     test('blogs are returned as json', async () => {
+
         await api
             .get('/api/blogs')
             .expect(200)
@@ -28,6 +31,7 @@ describe('when there are intial blogs', () => {
 
 describe('viewing specific blog', () => {
     test('requested blog is returned', async () => {
+
         const response = await api.get('/api/blogs/5a422b3a1b54a676234d17f9')
         console.log(response.body)
         expect(response.body).toBeDefined()
@@ -35,6 +39,7 @@ describe('viewing specific blog', () => {
 })
 
 describe('addition of blogs', () => {
+
     test('new blog is added', async () => {
         const newBlog = {
             title: "Type wars",
@@ -59,6 +64,7 @@ describe('addition of blogs', () => {
     })
 
     test('add default likes if missing', async () => {
+
         const newBlog = {
             title: "TDD harms architecture",
             author: "Robert C. Martin",
@@ -88,6 +94,7 @@ describe('addition of blogs', () => {
     )
 
     test('reject invalid blog', async () => {
+
         const newBlog = {
             title: "TDD harms architecture",
             author: "Robert C. Martin",
@@ -102,6 +109,7 @@ describe('addition of blogs', () => {
 
 describe('deletion of blog', () => {
     test('successfully deletes a specific blog', async () => {
+
         const existingBlogs = await helper.blogsInDb()
         console.log(existingBlogs)
         const blogToDelete = existingBlogs[1]
@@ -121,6 +129,7 @@ describe('deletion of blog', () => {
 
 describe('updating a blog', () => {
     test('succesfully updates an existing blog', async () => {
+
         const blogsAtStart = await helper.blogsInDb()
         const blogBeforeUdpate = blogsAtStart[2]
         const blog = {
@@ -141,6 +150,89 @@ describe('updating a blog', () => {
     })
 })
 
+describe('when there is initially one user at db', () => {
+
+    test('creation succeeds for a new user', async () => {
+
+        const usersAtStart = await helper.usersInDb()
+        console.log(usersAtStart)
+        const newUser = {
+            "username": "kamisl",
+            "name": "Ramya K",
+            "password": "ram123",
+        }
+
+        await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(201)
+            .expect('Content-Type', /application\/json/)
+
+        const usersAtEnd = await helper.usersInDb()
+        expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
+    })
+
+    test('creation fails when a user already exists', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            "username": "hellas",
+            "name": "Robert C. Martin",
+            "password": "romart",
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        console.log(result.error.text)
+        expect(result.error.text).toContain('expected username to be unique')
+
+        const usersAtEnd = await helper.usersInDb()
+        expect(usersAtEnd).toHaveLength(usersAtStart.length)
+    })
+
+    test('creation fails when username does not meet length criteria', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            "username": "he",
+            "name": "Arto Hellas",
+            "password": "hellar43",
+        }
+
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        expect(result.error.text).toContain('username must have atleast 3 characters')
+        const usersAtEnd = await helper.usersInDb()
+        expect(usersAtEnd).toHaveLength(usersAtStart.length)
+    })
+
+    test('creation fails when password does not meet length criteria', async () => {
+        const usersAtStart = await helper.usersInDb()
+
+        const newUser = {
+            "username": "ramyakr",
+            "name": "Ramya K R",
+            "password": "he",
+        }
+        const result = await api
+            .post('/api/users')
+            .send(newUser)
+            .expect(400)
+            .expect('Content-Type', /application\/json/)
+
+        expect(result.text).toContain('Password should be at least 3 characters long')
+        const usersAtEnd = await helper.usersInDb()
+        expect(usersAtEnd).toHaveLength(usersAtStart.length)
+    })
+})
 afterAll(async () => {
     await mongoose.connection.close()
 })
