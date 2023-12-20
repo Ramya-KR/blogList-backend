@@ -24,6 +24,7 @@ const initialBlogs = [
         author: "Edsger W. Dijkstra",
         url: "http://www.cs.utexas.edu/~EWD/transcriptions/EWD08xx/EWD808.html",
         likes: 12,
+        user: "65832fb434f3289e9c43617b",
         __v: 0
     },
 ]

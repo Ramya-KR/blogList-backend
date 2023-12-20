@@ -2,8 +2,8 @@ POST http://localhost:3003/api/blogs
 Content-Type: application/json
 
 {
-    "title": "8 Blogs To Read When You Need A Little Inspiration",
-    "author": "Deanna",
-    "url": "https://lifebydeanna.com/8-blogs-to-read-when-you-need-a-little-inspiration/",
+    "title": "THE IMPACT OF BITCOIN ON THE FINANCIAL SYSTEM",
+    "author": "Ashok Patel",
+    "url": "https://www.appsloveworld.com/the-impact-of-bitcoin-on-the-financial-system/",
     "likes": 946
 }

@@ -9,6 +9,7 @@ const bcrypt = require('bcrypt')
 
 jest.useRealTimers()
 
+
 beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
@@ -19,20 +20,23 @@ describe('when there are intial blogs', () => {
 
         await api
             .get('/api/blogs')
+            .set('authorization', process.env.TOKEN)
             .expect(200)
             .expect('Content-Type', /application\/json/)
     })
 
     test('all blogs are returned', async () => {
-        const response = await api.get('/api/blogs')
-        expect(response.body).toHaveLength(helper.initialBlogs.length)
+        const response = await api.get('/api/blogs').set('authorization', process.env.TOKEN)
+        const blogLength = helper.initialBlogs.length
+        console.log(blogLength)
+        expect(response.body).toHaveLength(blogLength)
     })
 })
 
 describe('viewing specific blog', () => {
     test('requested blog is returned', async () => {
 
-        const response = await api.get('/api/blogs/5a422b3a1b54a676234d17f9')
+        const response = await api.get('/api/blogs/5a422b3a1b54a676234d17f9').set('authorization', process.env.TOKEN)
         console.log(response.body)
         expect(response.body).toBeDefined()
     })
@@ -48,7 +52,9 @@ describe('addition of blogs', () => {
             likes: 2,
         }
 
-        await api.post('/api/blogs')
+        await api
+            .post('/api/blogs')
+            .set('authorization', process.env.TOKEN)
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -78,6 +84,7 @@ describe('addition of blogs', () => {
         }
 
         await api.post('/api/blogs')
+            .set('authorization', process.env.TOKEN)
             .send(newBlog)
             .expect(201)
             .expect('Content-Type', /application\/json/)
@@ -102,8 +109,24 @@ describe('addition of blogs', () => {
         }
 
         await api.post('/api/blogs')
+            .set('authorization', process.env.TOKEN)
             .send(newBlog)
             .expect(400)
+    })
+
+    test('reject adding blog when token is not provided', async  () => {
+        const newBlog = {
+            title: "Type wars",
+            author: "Robert C. Martin",
+            url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
+            likes: 2,
+        }
+
+        await api
+        .post('/api/blogs')
+        .send(newBlog)
+        .expect(401)
+
     })
 })
 
@@ -112,10 +135,11 @@ describe('deletion of blog', () => {
 
         const existingBlogs = await helper.blogsInDb()
         console.log(existingBlogs)
-        const blogToDelete = existingBlogs[1]
+        const blogToDelete = existingBlogs[2]
 
         await api
             .delete(`/api/blogs/${blogToDelete.id}`)
+            .set('authorization', process.env.TOKEN)
             .expect(204)
 
         const blogsAtEnd = await helper.blogsInDb()
@@ -141,6 +165,7 @@ describe('updating a blog', () => {
         }
         await api
             .put(`/api/blogs/${blog._id}`)
+            .set('authorization', process.env.TOKEN)
             .send(blog)
 
         const blogsAtEnd = await helper.blogsInDb()
@@ -157,9 +182,9 @@ describe('when there is initially one user at db', () => {
         const usersAtStart = await helper.usersInDb()
         console.log(usersAtStart)
         const newUser = {
-            "username": "kamisl",
-            "name": "Ramya K",
-            "password": "ram123",
+            "username": "shilpa",
+            "name": "Shilpa Kamishetty",
+            "password": "shilshan",
         }
 
         await api
