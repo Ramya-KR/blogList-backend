@@ -29,6 +29,10 @@ app.use(middleware.tokenExtractor)
 app.use('/api/blogs',middleware.userExtractor,blogRouter)
 app.use('/api/users', userRouter)
 app.use('/api/login', loginRouter)
+if(process.env.NODE_ENV === 'test') {
+    const resetRouter = require('./contollers/reset')
+    app.use('/api/testing',resetRouter)
+}
 app.use(middleware.unknownEndpoint)
 app.use(middleware.errorHandler)
 
